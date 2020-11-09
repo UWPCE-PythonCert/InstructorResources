@@ -36,3 +36,8 @@ threee small assignemnts in a single week. THat means I have to look at three di
 repos to grade them -- even one extra minute of point-and-clicking is 40 extra minutes a week for my class -- that's a lot!
 
 If / when i do this again, I'll probably merge the smaller assignemtns into one per Lesson.
+
+### mailroom with exceptions and mailroom wit unit tests
+
+If they are in teh same lesseon, thwy -- should be one assignment!
+
