@@ -1,11 +1,8 @@
-#!/usr/bin/env python
+# mailroom package
 
-"""
-mailroom package
-"""
+__version__ = "2.0.0"
 
-from pathlib import Path
+random_thing = "stuff"
 
-__version__ = "0.1.1"
+from .cli import main_menu
 
-data_dir = data_file = Path(__file__).parent / "data"

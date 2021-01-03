@@ -7,7 +7,7 @@ solutions to the Fibonacci Series, Lucas numbers and
 generalized sum_series
 
 These solutions use recursion
--- calling a funciton from within that function.
+-- calling a function from within that function.
 
 These series are defined "recusively", so it's a
 really natural way to express the solution. However,
@@ -46,7 +46,7 @@ def lucas(n):
 # Note how these two are almost identical code.
 # Following the DRY (Don't Repeat Yourself) principle,
 # It makes sense to write them as a single function
-# takes the initial two values as parameters.
+# that takes the initial two values as parameters.
 
 
 def sum_series(n, n0=0, n1=1):
@@ -131,4 +131,4 @@ if __name__ == "__main__":
     assert sum_series(4, 3, 2) == 12
     assert sum_series(5, 3, 2) == 19
 
-    print("tests passed")
+    print("all tests passed")

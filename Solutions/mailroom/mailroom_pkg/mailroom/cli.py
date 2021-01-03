@@ -1,110 +1,146 @@
 #!/usr/bin/env python
 """
-The command line interface to mailroom package.
+mailroom command line interface
 
-The only code in here should deal with the command line interface.
-
-Nothing to do with the logic code, etc that does the real work.
 """
 
 import sys
-import math
-
 # handy utility to make pretty printing easier
 from textwrap import dedent
-import pathlib
-from mailroom import model, data_dir
 
-# create a DB with the sample data
-print("***\nloading sample data\n***")
-db = model.DonorDB.load_from_file(data_dir / "sample_data.json")
+from . import model as mr
 
 
-def main_menu_selection():
-    """
-    Print out the main application menu and then read the user input.
-    """
-    action = input(dedent('''
-      Choose an action:
-
-      1 - Send a Thank You
-      2 - Create a Report
-      3 - Send letters to everyone
-      4 - Quit
-
-      > '''))
-    return action.strip()
-
-
-def send_thank_you():
-    """
-    Record a donation and generate a thank you message.
-    """
-    # Read a valid donor to send a thank you from, handling special commands to
-    # let the user navigate as defined.
-    while True:
-        name = input("Enter a donor's name"
-                     "(or 'list' to see all donors or 'menu' to exit)> ").strip()
-        if name == "list":
-            print(db.list_donors())
-        elif name == "menu":
-            return
-        else:
-            break
-
+def get_donation_amount():
+    """ Get the donation amount"""
     # Now prompt the user for a donation amount to apply. Since this is
     # also an exit point to the main menu, we want to make sure this is
     # done before mutating the db.
     while True:
-        amount_str = input("Enter a donation amount (or 'menu' to exit)> ").strip()
+        amount_str = input("Enter a donation amount (or 'menu' to exit) > ").strip()
         if amount_str == "menu":
             return
         # Make sure amount is a valid amount before leaving the input loop
         try:
-            amount = float(amount_str)
-            # extra check here -- unlikely that someone will type "NaN", but
-            # it IS possible, and it is a valid floating point number:
-            # http://en.wikipedia.org/wiki/NaN
-            if math.isnan(amount) or math.isinf(amount) or round(amount, 2) == 0.00:
-                raise ValueError
-        # in this case, the ValueError could be raised by the float() call, or by the NaN-check
+            amount = mr.validate_donation(amount_str)
         except ValueError:
             print("error: donation amount is invalid\n")
         else:
             break
+    return amount
 
-    # If this is a new user, ensure that the database has the necessary
-    # data structure.
-    donor = db.find_donor(name)
-    if donor is None:
-        donor = db.add_donor(name)
 
-    # Record the donation
-    donor.add_donation(amount)
-    print(db.gen_letter(donor))
+def get_donors_name():
+    name = input("Enter a donors name (or 'menu' to exit) > ").strip()
+    if name.lower() == "menu":
+        return None
+    else:
+        return name
+
+
+def print_donors_list():
+    """
+    print a list of existing donors
+    """
+    print(mr.list_donors())
+    return False
+
+
+def send_thank_you():
+    """
+    Execute the logic to record a donation and generate a thank you message.
+    """
+    # Read a valid donor to send a thank you from, handling special commands to
+    # let the user navigate as defined.
+    name = get_donors_name()
+    if name is None:
+        return
+
+    # Since this is also an exit point to the main menu,
+    # we want to make sure this is done before mutating the db.
+    amount = get_donation_amount()
+    if amount is None:
+        return
+
+    # If it gets here, it should be a valid name and donation amount
+    donor = mr.add_donation(name, amount)
+    print(mr.gen_letter(donor))
 
 
 def print_donor_report():
-    print(db.generate_donor_report())
+    print(mr.generate_donor_report())
 
 
-def quit():
+# Utilities for driving the menus:
+
+def to_quit():
     sys.exit(0)
 
 
-def main():
-    selection_dict = {"1": send_thank_you,
-                      "2": print_donor_report,
-                      "3": db.save_letters_to_disk,
-                      "4": quit}
+def return_to_menu():
+    """ Return True to trigger exit out of sub-loop"""
+    return True
 
+
+def run_interactive_loop(action_dict, prompt_string):
+    """
+    this is the code to run an arbitrary interactive loop
+
+    :param action_dict: dict mapping responses to actions
+
+    :param prompt_string: text of the prompt.
+    """
     while True:
-        selection = main_menu_selection()
-        try:
-            selection_dict[selection]()
-        except KeyError:
-            print("error: menu selection is invalid!")
+        answer = input(prompt_string).strip()
+        if answer:
+            try:
+                result = action_dict[answer]()
+            except (KeyError):
+                print(f'"{answer}" is not a valid input -- try again')
+                continue
+            if result:
+                return
 
-if __name__ == "__main__":
+def thank_you_menu():
 
-    main()
+    selection_dict = {"1": send_thank_you,
+                      "2": print_donors_list,
+                      "3": return_to_menu,
+                      }
+
+    prompt = dedent('''
+                  Choose an action:
+
+                  1 - Process a Donation
+                  2 - List Existing Donors
+                  3 - Return to Main Menu
+                  > ''')
+
+    run_interactive_loop(selection_dict, prompt)
+
+
+def main_menu():
+
+    selection_dict = {"1": thank_you_menu,
+                      "2": print_donor_report,
+                      "3": mr.save_letters_to_disk,
+                      "4": to_quit}
+
+    prompt = dedent('''
+                  Choose an action:
+
+                  1 - Send a Thank You
+                  2 - Create a Report
+                  3 - Send letters to everyone
+                  4 - Quit
+
+                  > ''')
+
+    run_interactive_loop(selection_dict, prompt)
+
+
+def main():
+    mr.initialize_donor_db()
+    main_menu()
+
+

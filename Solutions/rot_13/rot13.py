@@ -87,7 +87,7 @@ dict_table = {}
 # the lower-case letters
 for c in range(a, z + 1):
     dict_table[c] = a + (c - a + 13) % 26
-# the lower-case letters
+# the upper-case letters
 for c in range(A, Z + 1):
     dict_table[c] = A + (c - A + 13) % 26
 
